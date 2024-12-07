@@ -1,5 +1,6 @@
 #pragma once
 
+#include <variant>
 #include <thread>
 #include <X11/Xlib.h>
 #include <unistd.h> 
@@ -8,6 +9,7 @@
 #include <cmath>
 #include <chrono>
 #include <vector>
+#include <memory>
 
 enum valid_element_types {
 
@@ -23,74 +25,85 @@ enum valid_element_types {
 
 };
 
-struct window_layout_struct {
-
-  std::vector<valid_element_types> type;
-  std::vector<unsigned int> anchor_x;
-  std::vector<unsigned int> anchor_y;
-  std::vector<unsigned int> size_x;
-  std::vector<unsigned int> size_y;
-  std::vector<unsigned int> id;
-  std::vector<std::string> data;
+class layout_element {
+public:
+  
+    virtual ~layout_element() = default;
+    virtual void draw() const = 0; 
 
 };
 
-template <typename T>
-struct layout_element_data {
 
-  T element_data;
-
-};
-
-class window_layout {
-
+class element_button : public layout_element {
 public:
 
-  window_layout_struct* layout;
+  element_button(const std::string& label) : label(label) {}
 
-  unsigned int element_count;
-
-  window_layout() {
-
-    layout = new window_layout_struct();
-    
-    element_count = 0;
+  void draw() const override {
+    std::cout << "Drawing Button: " << label << std::endl;
 
   }
 
-  ~window_layout() {
+private:
+  std::string label;
 
-    delete layout;
-
-  }
-  
-  bool add_element(valid_element_types type, unsigned int anchor_x, unsigned int anchor_y, unsigned int size_x, unsigned int size_y, std::string data) {
-
-    layout->type.push_back(type);
-    layout->anchor_x.push_back(anchor_x);
-    layout->anchor_y.push_back(anchor_y);
-    layout->size_x.push_back(size_x);
-    layout->size_y.push_back(size_y);
-    layout->id.push_back(element_count);
-    layout->data.push_back(data);
-
-    element_count++;
-    
-    return true;
-    
-  }
-
-  bool validate_window_layout_struct() {
-
-    if((layout->type.size() + layout->anchor_x.size() + layout->anchor_y.size() + layout->size_x.size() + layout->size_y.size() + layout->id.size()) / 6 == layout->id.size() ) {
-      return true; } else { return false;}
-
-  }
-
-  window_layout_struct* get_window_layout() {
-
-    return this->layout;
-
-  }
-  
 };
+
+
+class element_label : public layout_element {
+public:
+
+  element_label(const std::string& text) : text(text) {}
+
+  void draw() const override {
+    std::cout << "Drawing Label: " << text << std::endl;
+
+  }
+
+private:
+  std::string text;
+
+};
+
+
+class element_text_box : public layout_element {
+public:
+
+  element_text_box(const std::string& placeholder) : placeholder(placeholder) {}
+
+  void draw() const override {
+
+    std::cout << "Drawing TextBox: " << placeholder << std::endl;
+
+  }
+
+private:
+  std::string placeholder;
+
+};
+
+
+class layout {
+public:
+
+  void addElement(std::unique_ptr<layout_element> element) {
+
+    elements.push_back(std::move(element));
+
+  }
+  
+  void drawAll() const {
+
+    for (const auto& element : elements) {
+
+      element->draw();
+
+    }
+
+  }
+  
+private:
+  std::vector<std::unique_ptr<layout_element>> elements; 
+
+};
+
