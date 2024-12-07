@@ -157,9 +157,9 @@ public:
      
     layout layout;
 
-    layout.addElement(std::make_unique<element_button>("Submit"));
-    layout.addElement(std::make_unique<element_label>("Username:"));
-    layout.addElement(std::make_unique<element_text_box>("Enter your name"));
+    layout.addElement(std::make_unique<element_button>(10,10,10,10,"button",1));
+    layout.addElement(std::make_unique<element_label>("label"));
+    layout.addElement(std::make_unique<element_text_box>(10,10,10,10,"username"));
 
     layout.drawAll();
     
