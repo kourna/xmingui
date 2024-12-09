@@ -23,9 +23,8 @@ public:
   bool shutdown = false;
 
   XFontStruct* font;
-  int mouse_x,mouse_y,win_x,win_y;
     
-  void window_runtime_helper(XFontStruct* font) {
+  void window_runtime_helper(XFontStruct* font, layout active_layout) {
     
     std::cout << __func__ << " loading fonts..." << std::endl;
     
@@ -40,13 +39,17 @@ public:
 
       if (event.type == Expose) {
        
-	//	draw_window(active_layout->get_window_layout());
+	active_layout.drawAll(display);
 	
       }
 
       if (event.type == ConfigureNotify) {
 
 	std::cout << "Window resized or moved." << std::endl;
+
+	//	active_layout.drawAll();
+
+	XFlush(display);
 	
       }
 
@@ -56,20 +59,37 @@ public:
 	Window child;
 	
 	unsigned int psychiose;
+
+	int mouse_x,mouse_y,win_x,win_y;
 	
+	std::cout << "calling xqery" << std::endl;
 	XQueryPointer(display, window, &root, &child, &win_x, &win_y, &mouse_x, &mouse_y, &psychiose );
 	
       }
-      
+
+      if (event.type == ButtonPress && event.xbutton.button == 1) { 
+
+	printf("Left mouse button pressed at (%d, %d)\n", event.xbutton.x, event.xbutton.y);
+
+      } else if (event.type == ButtonRelease && event.xbutton.button == 1) {
+
+	printf("Left mouse button released at (%d, %d)\n", event.xbutton.x, event.xbutton.y);
+
+      }
+                
       if (event.type == KeyPress) {
 	
 	char buffer[1];
 
 	KeySym keysym;
+
+	printf("before loopup");
 	
 	XLookupString(&event.xkey, buffer, sizeof(buffer), &keysym, NULL);
 	printf("Key pressed: %c\n", buffer[0]);
 
+	printf("after loopup");
+	
 	if(buffer[0] == 'x')
 	  break;
 	
@@ -79,12 +99,14 @@ public:
 
 	  //  cur_line=cur_line+active_layout->layout->size_y[1];
 	  
+
 	}
 	
 	if(buffer[0] == 's') {
 	  
 	  // clip_cursor_position(mouse_x,mouse_y);
-	  
+
+
 	}
 
 	// draw_window(active_layout->get_window_layout());
@@ -98,7 +120,7 @@ public:
   } 
 
   int init_gui(void) {
-
+    
     std::cout << "Trying to allocate GUI." << std::endl;
       
     display = XOpenDisplay(NULL);
@@ -154,20 +176,22 @@ public:
     //================================= MAIN LAYOUT CONFIG SPACE ================================= 
 
     std::cout << "Loading Layouts..." << std::endl;
-     
-    layout layout;
 
-    layout.addElement(std::make_unique<element_button>(10,10,10,10,"button",1));
-    layout.addElement(std::make_unique<element_label>("label"));
-    layout.addElement(std::make_unique<element_text_box>(10,10,10,10,"username"));
+    layout active_layout;
+    
+    active_layout.addElement(std::make_unique<element_button>(display,window,gc,10,10,10,10,"button",1));
+    active_layout.addElement(std::make_unique<element_label>("label"));
+    active_layout.addElement(std::make_unique<element_text_box>(display,window,gc,10,10,10,10,"username"));
 
-    layout.drawAll();
+    std::cout << "trying to render shit..." << std::endl;
+    
+    active_layout.drawAll(display);
     
     //================================= WINDOW HANDLER =================================
     
     std::cout << "Launching window runtime helper..." << std::endl;
 
-    window_runtime_helper(font);
+    window_runtime_helper(font,active_layout);
 
     //Cleanup shoutout to feroxtard
     XUnloadFont(display, font->fid);

@@ -12,8 +12,6 @@
 #include <chrono>
 #include <vector>
 
-#include "layout.h"
-
 void draw_box(Display* display, Window window, GC gc, unsigned int anchor_x, unsigned int anchor_y, unsigned int size_x, unsigned int size_y) {
 
   XDrawLine(display, window, gc, anchor_x, anchor_y, anchor_x+size_x, anchor_y);
