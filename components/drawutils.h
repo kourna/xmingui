@@ -51,6 +51,52 @@ void draw_dynamic_box_with_text(Display* display, Window window, GC gc, unsigned
   return;
 }
 
+void draw_dynamic_text(Display* display, Window window, GC gc, unsigned int id , XFontStruct* font, unsigned int anchor_x, unsigned int anchor_y, unsigned int *size_x, unsigned int *size_y, std::string label) {
+
+  std::string todraw = label;
+  
+  int font_height = font->ascent + font->descent;
+  int font_ascent = font->ascent; 
+  int font_descent = font->descent;
+  int max_width = font->max_bounds.width;
+  
+  int total_text_width = (max_width * todraw.length()) + 2*MARGIN_X;
+  int total_text_height = (font_height);
+
+  *size_x = total_text_width;
+  *size_y = total_text_height;
+
+  XDrawString(display, window, gc, anchor_x+MARGIN_X, anchor_y+total_text_height-MARGIN_Y+1, todraw.c_str() , todraw.length() );
+
+  XFlush(display);
+  
+  return;
+}
+
+void draw_dynamic_underlined_text(Display* display, Window window, GC gc, unsigned int id , XFontStruct* font, unsigned int anchor_x, unsigned int anchor_y, unsigned int *size_x, unsigned int *size_y, std::string label) {
+
+  std::string todraw = label;
+  
+  int font_height = font->ascent + font->descent;
+  int font_ascent = font->ascent; 
+  int font_descent = font->descent;
+  int max_width = font->max_bounds.width;
+  
+  int total_text_width = (max_width * todraw.length()) + 2*MARGIN_X;
+  int total_text_height = (font_height);
+
+  *size_x = total_text_width;
+  *size_y = total_text_height;
+
+  XDrawLine(display, window, gc, anchor_x+total_text_width, anchor_y+total_text_height, anchor_x, anchor_y+total_text_height);
+  
+  XDrawString(display, window, gc, anchor_x+MARGIN_X, anchor_y+total_text_height-MARGIN_Y+1, todraw.c_str() , todraw.length() );
+
+  XFlush(display);
+  
+  return;
+}
+
 void draw_dynamic_window_border(Display* display, Window window, GC gc, unsigned int width) {
   
   XWindowAttributes window_attributes;

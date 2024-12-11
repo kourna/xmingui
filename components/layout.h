@@ -19,6 +19,8 @@ enum valid_element_types {
   TABLE,
   TEXT_INPUT_BOX,
   TEXT_BOX,
+  TEXT,
+  TEXT_UNDERLINED,
   BUTTON_LABELED,
   IMAGE,
   SLIDER,

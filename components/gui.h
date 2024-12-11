@@ -38,13 +38,27 @@ public:
 	draw_dynamic_box_with_text(display, window, gc, active_layout->id[i] , font , active_layout->anchor_x[i], active_layout->anchor_y[i], &active_layout->size_x[i], &active_layout->size_y[i],active_layout->label[i]);
 
 	break;
-      case TEXT_BOX:
 
-	draw_box(display, window, gc, active_layout->anchor_x[i], active_layout->anchor_y[i], active_layout->size_x[i], active_layout->size_y[i]);
+      case TEXT:
+
+	draw_dynamic_text(display, window, gc, active_layout->id[i] , font , active_layout->anchor_x[i], active_layout->anchor_y[i], &active_layout->size_x[i], &active_layout->size_y[i],active_layout->label[i]);
 
 	break;
-      case BORDER:
 
+      case TEXT_UNDERLINED:
+	
+	draw_dynamic_underlined_text(display, window, gc, active_layout->id[i] , font , active_layout->anchor_x[i], active_layout->anchor_y[i], &active_layout->size_x[i], &active_layout->size_y[i],active_layout->label[i]);
+
+	break;
+
+      case TEXT_BOX:
+	
+	draw_box(display, window, gc, active_layout->anchor_x[i], active_layout->anchor_y[i], active_layout->size_x[i], active_layout->size_y[i]);
+	
+	break;
+
+      case BORDER:
+	
 	draw_dynamic_window_border(display,window,gc,active_layout->anchor_x[i]);
 
 	break;
@@ -55,6 +69,34 @@ public:
 
     }
 
+  }
+
+  void execute_button_functionality(unsigned int callback_id) {
+    // space to link your callback variables to functions of your code!
+    // the callback values can then be linked to elements in you gui config file!
+
+    switch(callback_id) {
+    case 0 :
+      
+      std::cout << "no functionality linked :D" << std::endl;
+
+      break;
+      
+    case 1 :
+      
+      std::cout << "red time!" << std::endl;
+
+      XSetForeground(display, gc, 0xFF0000);
+
+      draw_active_layout();
+      
+      break;
+      
+      
+    }
+    
+    return;
+    
   }
 
   void clip_cursor_position(unsigned int mouse_x, unsigned int mouse_y) {
@@ -68,7 +110,10 @@ public:
 	 mouse_y < active_layout->size_y[i]+active_layout->anchor_y[i]
 	 )
 	{
-	  std::cout << "clicked on button with id: " << active_layout->id[i] << std::endl;
+	  std::cout << "clicked on button with id: " << active_layout->id[i] << " - and linked callback function id: " << active_layout->callback[i] << std::endl;
+
+	  execute_button_functionality(active_layout->callback[i]);
+
 	}      
       
     }
@@ -77,21 +122,6 @@ public:
 
   }
 
-  void execute_button_functionality(unsigned int button_id) {
-    // space to link your callback variables to functions of your code!
-    // the callback values can then be linked to elements in you gui config file!
-
-    switch(button_id) {
-    case 0 :
-      
-      break;
-      
-
-    }
-    
-    return;
-    
-  }
   
   void set_gui_name(std::string name) {
 
@@ -235,12 +265,12 @@ public:
     
     std::cout << "done... adding elements" << std::endl;
 
+    //load a layout via file dynamically:
     active_layout = deserialize_layout_file("layouts/main_layout");
-    
-      /*    add_element(active_layout, BUTTON , 10, 10, 20 , 100, "im a test button!!!", 0);
-	    add_element(active_layout, BUTTON , 10, 40, 20 , 100, "me too :D", 1);
-	    add_element(active_layout, BORDER , 3, 0, 0 , 0, "", 0);
-      */
+
+    //or statically declare your layout, in case you dont wanna change it!
+    add_element(active_layout, BUTTON , 10, 70, 20 , 100, "i was statically declared!", 0);
+    add_element(active_layout, BUTTON , 10, 100, 20 , 100, "me too :D - click me for red", 1);
       
     std::cout << "done! " << std::endl;
 

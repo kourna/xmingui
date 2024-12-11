@@ -6,7 +6,7 @@
 
 # how to use
 
-- copy "compnents" and "layouts" folder into your project
+- copy "components" and "layouts" folder into your project
 - include gui.h
 - done :P
 

@@ -16,6 +16,8 @@ struct layout_struct;
 valid_element_types string_to_element_type(const std::string& typeStr) {
     if (typeStr == "BUTTON") return BUTTON;
     if (typeStr == "TABLE") return TABLE;
+    if (typeStr == "TEXT") return TEXT;
+    if (typeStr == "TEXT_UNDERLINED") return TEXT_UNDERLINED;
     if (typeStr == "TEXT_INPUT_BOX") return TEXT_INPUT_BOX;
     if (typeStr == "TEXT_BOX") return TEXT_BOX;
     if (typeStr == "BUTTON_LABELED") return BUTTON_LABELED;
@@ -52,6 +54,8 @@ layout_struct* deserialize_layout_file(std::string filename) {
   for(int i = 0; i < lines.size(); ++i) {
 
     std::vector<std::string> result;
+
+    std::cout << lines[0] << std::endl;
     
     std::stringstream ss(lines[i]); 
     std::string item;
