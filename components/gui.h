@@ -23,8 +23,48 @@ public:
   bool shutdown = false;
 
   XFontStruct* font;
-    
-  void window_runtime_helper(XFontStruct* font, layout active_layout) {
+
+  layout_struct *active_layout;
+
+  void draw_active_layout() {
+
+    for(unsigned int i = 0; i < active_layout->id.size(); ++i) {
+
+      switch(active_layout->type[i]) {
+
+      case BUTTON:
+
+	draw_dynamic_box_with_text(display, window, gc, active_layout->id[i] , font , active_layout->anchor_x[i], active_layout->anchor_y[i], active_layout->size_x[i],active_layout->size_y[i],active_layout->label[i]);
+
+	break;
+      case TEXT_BOX:
+
+	draw_box(display, window, gc, active_layout->anchor_x[i], active_layout->anchor_y[i], active_layout->size_x[i], active_layout->size_y[i]);
+
+	break;
+      case BORDER:
+
+	draw_dynamic_window_border(display,window,gc,active_layout->anchor_x[i]);
+
+	break;
+
+      }
+
+      XFlush(display);
+
+    }
+
+  }
+  
+  void set_gui_name(std::string name) {
+
+    XStoreName(display, window, name.c_str());
+
+    return;
+
+  }
+  
+  void window_runtime_helper(XFontStruct* font) {
     
     std::cout << __func__ << " loading fonts..." << std::endl;
     
@@ -36,18 +76,12 @@ public:
     while(!shutdown) {
       
       XNextEvent(display, &event);
+      
+      if (event.type == Expose | event.type == ConfigureNotify ) {
 
-      if (event.type == Expose) {
-       
-	active_layout.drawAll(display);
-	
-      }
+	std::cout << "Window needs to be redrawn.." << std::endl;       
 
-      if (event.type == ConfigureNotify) {
-
-	std::cout << "Window resized or moved." << std::endl;
-
-	//	active_layout.drawAll();
+	//draw all components
 
 	XFlush(display);
 	
@@ -159,10 +193,9 @@ public:
 
     gc = XCreateGC(display, window, 0, NULL); // graphic context for render?
 
+    set_gui_name("placeholder");
+    
     XSetForeground(display, gc, blackColor);
-
-    XStoreName(display, window, "wruff-tools");
-
 
     for(;;) {
       XEvent e;
@@ -177,21 +210,23 @@ public:
 
     std::cout << "Loading Layouts..." << std::endl;
 
-    layout active_layout;
-    
-    active_layout.addElement(std::make_unique<element_button>(display,window,gc,10,10,10,10,"button",1));
-    active_layout.addElement(std::make_unique<element_label>("label"));
-    active_layout.addElement(std::make_unique<element_text_box>(display,window,gc,10,10,10,10,"username"));
+    active_layout = new layout_struct;
 
-    std::cout << "trying to render shit..." << std::endl;
+    if(!active_layout){std::cout << "error creating new layout!" << std::endl;}
     
-    active_layout.drawAll(display);
+    std::cout << "done... adding elements" << std::endl;
+
+    add_element(active_layout, BUTTON , 10, 10, 20 , 100, "hi", 0);
+
+    std::cout << "done! " << std::endl;
+
+    draw_active_layout();
     
     //================================= WINDOW HANDLER =================================
     
     std::cout << "Launching window runtime helper..." << std::endl;
 
-    window_runtime_helper(font,active_layout);
+    window_runtime_helper(font);
 
     //Cleanup shoutout to feroxtard
     XUnloadFont(display, font->fid);

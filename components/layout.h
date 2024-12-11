@@ -27,153 +27,37 @@ enum valid_element_types {
 
 };
 
-class layout_element {
-public:
+struct style_rules {
 
-  Display* display;
-  Window window;
-  GC gc;
-  
-  virtual ~layout_element() = default;
-  virtual void draw() const = 0; 
-  
-};
-
-
-class element_button : public layout_element {
-public:
-
-  Display* display;
-  Window window;
-  GC gc;
-  unsigned int anchor_x;
-  unsigned int anchor_y;
-  unsigned int size_x;
-  unsigned int size_y;
-  std::string label;
-  unsigned int button_id;
-   
-  element_button(
-		 Display* idisplay,
-		 Window iwindow,
-		 GC igc,
-		 unsigned int ianchor_x,
-		 unsigned int ianchor_y,
-		 unsigned int isize_x,
-		 unsigned int isize_y,
-		 std::string ilabel,
-		 unsigned int ibutton_id
-
-		 ) :
-
-    display(idisplay),
-    window(iwindow),
-    gc(igc),
-    anchor_x(ianchor_x),
-    anchor_y(ianchor_y),
-    size_x(isize_x),
-    size_y(isize_y),
-    label(ilabel),
-    button_id(ibutton_id) {}
-
-  void draw() const override {
-
-    std::cout << "Drawing Button: " << label << std::endl;
-
-    //    draw_box(display,window,gc,10,10,10,10);
-
-  }
-     
-};
-
-
-class element_label : public layout_element {
-public:
-
-  element_label(const std::string& text) : text(text) {}
-
-  void draw() const override {
-    std::cout << "Drawing Label: " << text << std::endl;
-
-  }
-
-private:
-  std::string text;
 
 };
 
+struct layout_struct {
 
-class element_text_box : public layout_element {
-public:
-  
-  Display* display;
-  Window window;
-  GC gc;
-  unsigned int anchor_x;
-  unsigned int anchor_y;
-  unsigned int size_x;
-  unsigned int size_y;
-  std::string label;
-   
- element_text_box(
-
-		  Display* idisplay,
-		  Window iwindow,
-		  GC igc,
-		  unsigned int ianchor_x,
-		  unsigned int ianchor_y,
-		  unsigned int isize_x,
-		  unsigned int isize_y,
-		  std::string ilabel
-		  
-		  ) :
-   
-   display(idisplay),
-   window(iwindow),
-   gc(igc),
-   anchor_x(ianchor_x),
-   anchor_y(ianchor_y),
-   size_x(isize_x),
-   size_y(isize_y),
-   label(ilabel)  {}
-  
-  void draw() const override {
-
-    std::cout << "Drawing TextBox: " << label << std::endl;
-
-  }
+  std::vector<valid_element_types>type;
+  std::vector<unsigned int>anchor_x;
+  std::vector<unsigned int>anchor_y;
+  std::vector<unsigned int>size_x;
+  std::vector<unsigned int>size_y;
+  std::vector<std::string>label;
+  std::vector<unsigned int>callback;
+  std::vector<unsigned int>id;
 
 };
 
+void add_element(layout_struct *mod_layout_struct, valid_element_types ntype, unsigned int nanchor_x, unsigned int nanchor_y, unsigned int nsize_x, unsigned int nsize_y, std::string nlabel, unsigned int ncallback) {
 
-class layout {
-public:
+  unsigned int next_free_slot = mod_layout_struct->id.size();
   
-  std::vector<std::unique_ptr<layout_element>> elements; 
+  mod_layout_struct->type.emplace_back(ntype);
+  mod_layout_struct->anchor_x.emplace_back(nanchor_x);
+  mod_layout_struct->anchor_y.emplace_back(nanchor_y);
+  mod_layout_struct->size_x.emplace_back(nsize_x);
+  mod_layout_struct->size_y.emplace_back(nsize_y);
+  mod_layout_struct->label.emplace_back(nlabel);
+  mod_layout_struct->callback.emplace_back(ncallback);
+  mod_layout_struct->id.emplace_back(next_free_slot - 1);
+
+  return;
   
-  void addElement(std::unique_ptr<layout_element> element) {
-
-    std::cout << "adding element" << std::endl;
-
-    elements.push_back(std::move(element));
-
-  }
-  
-  void drawAll(Display* display) const {
-
-    std::cout << "tryna draw shit" << std::endl;
-    
-    for (const auto& element : elements) {
-
-      std::cout << "tryna draw element" << std::endl;
-      
-      element->draw();
-
-    }
-
-    XFlush(display);
-    
-  }
-  
-};
-
+}
