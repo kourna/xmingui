@@ -24,7 +24,7 @@ void draw_box(Display* display, Window window, GC gc, unsigned int anchor_x, uns
   return;
 }
 
-void draw_dynamic_box_with_text(Display* display, Window window, GC gc, unsigned int id , XFontStruct* font, unsigned int anchor_x, unsigned int anchor_y, unsigned int size_x, unsigned int size_y, std::string label) {
+void draw_dynamic_box_with_text(Display* display, Window window, GC gc, unsigned int id , XFontStruct* font, unsigned int anchor_x, unsigned int anchor_y, unsigned int *size_x, unsigned int *size_y, std::string label) {
 
   std::string todraw = label;
   
@@ -32,9 +32,12 @@ void draw_dynamic_box_with_text(Display* display, Window window, GC gc, unsigned
   int font_ascent = font->ascent; 
   int font_descent = font->descent;
   int max_width = font->max_bounds.width;
-
+  
   int total_text_width = (max_width * todraw.length()) + 2*MARGIN_X;
   int total_text_height = (font_height);
+
+  *size_x = total_text_width;
+  *size_y = total_text_height;
 
   XDrawLine(display, window, gc, anchor_x, anchor_y, anchor_x+total_text_width, anchor_y);
   XDrawLine(display, window, gc, anchor_x+total_text_width, anchor_y, anchor_x+total_text_width, anchor_y+total_text_height);

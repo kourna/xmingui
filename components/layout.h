@@ -23,7 +23,8 @@ enum valid_element_types {
   IMAGE,
   SLIDER,
   SLIDER_LABELED,
-  BORDER
+  BORDER,
+  UNKNOWN
 
 };
 
@@ -56,7 +57,7 @@ void add_element(layout_struct *mod_layout_struct, valid_element_types ntype, un
   mod_layout_struct->size_y.emplace_back(nsize_y);
   mod_layout_struct->label.emplace_back(nlabel);
   mod_layout_struct->callback.emplace_back(ncallback);
-  mod_layout_struct->id.emplace_back(next_free_slot - 1);
+  mod_layout_struct->id.emplace_back(next_free_slot);
 
   return;
   

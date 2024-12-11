@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "layout.h"
+#include "deserializer.h"
 
 class x_gui {
 
@@ -34,7 +35,7 @@ public:
 
       case BUTTON:
 
-	draw_dynamic_box_with_text(display, window, gc, active_layout->id[i] , font , active_layout->anchor_x[i], active_layout->anchor_y[i], active_layout->size_x[i],active_layout->size_y[i],active_layout->label[i]);
+	draw_dynamic_box_with_text(display, window, gc, active_layout->id[i] , font , active_layout->anchor_x[i], active_layout->anchor_y[i], &active_layout->size_x[i], &active_layout->size_y[i],active_layout->label[i]);
 
 	break;
       case TEXT_BOX:
@@ -54,6 +55,42 @@ public:
 
     }
 
+  }
+
+  void clip_cursor_position(unsigned int mouse_x, unsigned int mouse_y) {
+    
+    for(int i = 0; i < active_layout->id.size(); ++i) {
+      
+      if (
+	 mouse_x > active_layout->anchor_x[i] &&
+	 mouse_x < active_layout->size_x[i]+active_layout->anchor_x[i] &&
+	 mouse_y > active_layout->anchor_y[i] &&
+	 mouse_y < active_layout->size_y[i]+active_layout->anchor_y[i]
+	 )
+	{
+	  std::cout << "clicked on button with id: " << active_layout->id[i] << std::endl;
+	}      
+      
+    }
+
+    return;
+
+  }
+
+  void execute_button_functionality(unsigned int button_id) {
+    // space to link your callback variables to functions of your code!
+    // the callback values can then be linked to elements in you gui config file!
+
+    switch(button_id) {
+    case 0 :
+      
+      break;
+      
+
+    }
+    
+    return;
+    
   }
   
   void set_gui_name(std::string name) {
@@ -81,7 +118,7 @@ public:
 
 	std::cout << "Window needs to be redrawn.." << std::endl;       
 
-	//draw all components
+	draw_active_layout();
 
 	XFlush(display);
 	
@@ -96,7 +133,6 @@ public:
 
 	int mouse_x,mouse_y,win_x,win_y;
 	
-	std::cout << "calling xqery" << std::endl;
 	XQueryPointer(display, window, &root, &child, &win_x, &win_y, &mouse_x, &mouse_y, &psychiose );
 	
       }
@@ -104,7 +140,8 @@ public:
       if (event.type == ButtonPress && event.xbutton.button == 1) { 
 
 	printf("Left mouse button pressed at (%d, %d)\n", event.xbutton.x, event.xbutton.y);
-
+	clip_cursor_position(event.xbutton.x,event.xbutton.y);
+	
       } else if (event.type == ButtonRelease && event.xbutton.button == 1) {
 
 	printf("Left mouse button released at (%d, %d)\n", event.xbutton.x, event.xbutton.y);
@@ -117,33 +154,15 @@ public:
 
 	KeySym keysym;
 
-	printf("before loopup");
-	
 	XLookupString(&event.xkey, buffer, sizeof(buffer), &keysym, NULL);
 	printf("Key pressed: %c\n", buffer[0]);
-
-	printf("after loopup");
 	
-	if(buffer[0] == 'x')
+	if(buffer[0] == 'x') {
+
+	  std::cout << "shutting down!" << std::endl;
 	  break;
-	
-	if(buffer[0] == 'w') {
 	  
-	  //  active_layout->add_element(BUTTON,10,cur_line,100,10, "Crazy Button");
-
-	  //  cur_line=cur_line+active_layout->layout->size_y[1];
-	  
-
 	}
-	
-	if(buffer[0] == 's') {
-	  
-	  // clip_cursor_position(mouse_x,mouse_y);
-
-
-	}
-
-	// draw_window(active_layout->get_window_layout());
 	
       }
       
@@ -181,7 +200,7 @@ public:
                                  whiteColor,//border color
                                  whiteColor); // background color
 
-    XSelectInput(display, window, ExposureMask | PointerMotionMask | KeyPressMask | StructureNotifyMask);
+    XSelectInput(display, window, ExposureMask | PointerMotionMask | ButtonReleaseMask | ButtonPressMask | KeyPressMask | StructureNotifyMask);
 
     font = XLoadQueryFont(display, "fixed");
     if (!font) {
@@ -208,16 +227,21 @@ public:
     
     //================================= MAIN LAYOUT CONFIG SPACE ================================= 
 
+    set_gui_name("example window");
+    
     std::cout << "Loading Layouts..." << std::endl;
 
     active_layout = new layout_struct;
-
-    if(!active_layout){std::cout << "error creating new layout!" << std::endl;}
     
     std::cout << "done... adding elements" << std::endl;
 
-    add_element(active_layout, BUTTON , 10, 10, 20 , 100, "hi", 0);
-
+    active_layout = deserialize_layout_file("layouts/main_layout");
+    
+      /*    add_element(active_layout, BUTTON , 10, 10, 20 , 100, "im a test button!!!", 0);
+	    add_element(active_layout, BUTTON , 10, 40, 20 , 100, "me too :D", 1);
+	    add_element(active_layout, BORDER , 3, 0, 0 , 0, "", 0);
+      */
+      
     std::cout << "done! " << std::endl;
 
     draw_active_layout();
