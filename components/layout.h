@@ -16,22 +16,12 @@
 enum valid_element_types {
 
   BUTTON,
-  TABLE,
-  TEXT_INPUT_BOX,
   TEXT_BOX,
   TEXT,
   TEXT_UNDERLINED,
-  BUTTON_LABELED,
   IMAGE,
-  SLIDER,
-  SLIDER_LABELED,
   BORDER,
   UNKNOWN
-
-};
-
-struct style_rules {
-
 
 };
 

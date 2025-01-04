@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <thread>
@@ -12,6 +13,7 @@
 
 #include "layout.h"
 #include "deserializer.h"
+#include "style_utils.h"
 
 class x_gui {
 
@@ -21,13 +23,19 @@ public:
   Window window;
   GC  gc;
 
+  stylesheet style = stylesheet();
+  
+  // optimization and helper vars
   bool shutdown = false;
+  bool draw_cooldown = false;
+  bool want_draw = false;
 
-  XFontStruct* font;
+  // image rendering
+  std::vector<std::vector<std::array<uint8_t, 3>>> pixel_data;
 
-  layout_struct *active_layout;
+  layout_struct *active_layout = {};
 
-  void draw_active_layout() {
+  void draw_active_layout(XFontStruct *font) {
 
     for(unsigned int i = 0; i < active_layout->id.size(); ++i) {
 
@@ -35,34 +43,47 @@ public:
 
       case BUTTON:
 
-	draw_dynamic_box_with_text(display, window, gc, active_layout->id[i] , font , active_layout->anchor_x[i], active_layout->anchor_y[i], &active_layout->size_x[i], &active_layout->size_y[i],active_layout->label[i]);
+	draw_dynamic_box_with_text(display, window, gc, style, active_layout->id[i] , font , active_layout->anchor_x[i], active_layout->anchor_y[i], &active_layout->size_x[i], &active_layout->size_y[i],active_layout->label[i]);
 
 	break;
 
       case TEXT:
 
-	draw_dynamic_text(display, window, gc, active_layout->id[i] , font , active_layout->anchor_x[i], active_layout->anchor_y[i], &active_layout->size_x[i], &active_layout->size_y[i],active_layout->label[i]);
+	draw_dynamic_text(display, window, gc, style, active_layout->id[i] , font , active_layout->anchor_x[i], active_layout->anchor_y[i], &active_layout->size_x[i], &active_layout->size_y[i],active_layout->label[i]);
 
 	break;
 
       case TEXT_UNDERLINED:
 	
-	draw_dynamic_underlined_text(display, window, gc, active_layout->id[i] , font , active_layout->anchor_x[i], active_layout->anchor_y[i], &active_layout->size_x[i], &active_layout->size_y[i],active_layout->label[i]);
+	draw_dynamic_underlined_text(display, window, gc, style, active_layout->id[i] , font , active_layout->anchor_x[i], active_layout->anchor_y[i], &active_layout->size_x[i], &active_layout->size_y[i],active_layout->label[i]);
 
 	break;
 
       case TEXT_BOX:
 	
-	draw_box(display, window, gc, active_layout->anchor_x[i], active_layout->anchor_y[i], active_layout->size_x[i], active_layout->size_y[i]);
+	draw_box(display, window, gc, style, active_layout->anchor_x[i], active_layout->anchor_y[i], active_layout->size_x[i], active_layout->size_y[i]);
 	
 	break;
 
       case BORDER:
 	
-	draw_dynamic_window_border(display,window,gc,active_layout->anchor_x[i]);
+	draw_dynamic_window_border(display,window,gc, style, active_layout->anchor_x[i]);
 
 	break;
 
+      case IMAGE:      
+
+	draw_image(display, window, gc, style, active_layout->anchor_x[i], active_layout->anchor_y[i], read_bmp(active_layout->label[i]));
+	
+	break;
+	
+      case UNKNOWN:      
+	
+	printf("error \n");
+	
+	break;
+	
+	
       }
 
       XFlush(display);
@@ -71,6 +92,33 @@ public:
 
   }
 
+  void try_to_draw_window() {
+
+    want_draw = true;
+
+    return;
+
+  }
+
+  void window_drawing_helper(XFontStruct *font) {
+
+    while(!shutdown) {
+
+      if(draw_cooldown){
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	draw_cooldown = false;
+      }
+      if(!draw_cooldown && want_draw) {
+	draw_cooldown = true;
+	want_draw = false;
+	draw_active_layout(font);
+      }
+    }
+    
+    return;
+    
+  }
+  
   void execute_button_functionality(unsigned int callback_id) {
     // space to link your callback variables to functions of your code!
     // the callback values can then be linked to elements in you gui config file!
@@ -88,8 +136,16 @@ public:
 
       XSetForeground(display, gc, 0xFF0000);
 
-      draw_active_layout();
+      try_to_draw_window();
       
+      break;
+      
+    case 2 :
+      
+      std::cout << "shutting down..." << std::endl;
+
+      shutdown = true;
+
       break;
       
       
@@ -101,7 +157,7 @@ public:
 
   void clip_cursor_position(unsigned int mouse_x, unsigned int mouse_y) {
     
-    for(int i = 0; i < active_layout->id.size(); ++i) {
+    for(long unsigned int i = 0; i < active_layout->id.size(); ++i) {
       
       if (
 	 mouse_x > active_layout->anchor_x[i] &&
@@ -130,42 +186,28 @@ public:
     return;
 
   }
+
+  void load_from_file(std::string toload) {
+
+    active_layout = deserialize_layout_file(toload);
+    
+    return;
+
+  }
   
   void window_runtime_helper(XFontStruct* font) {
     
     std::cout << __func__ << " loading fonts..." << std::endl;
     
     XEvent event;
-    int cur_line = 10;
     
     XSetFont(display, gc, font->fid);
+
+    std::thread draw_helper(&x_gui::window_drawing_helper,this,font);
     
     while(!shutdown) {
       
       XNextEvent(display, &event);
-      
-      if (event.type == Expose | event.type == ConfigureNotify ) {
-
-	std::cout << "Window needs to be redrawn.." << std::endl;       
-
-	draw_active_layout();
-
-	XFlush(display);
-	
-      }
-
-      if(event.type == MotionNotify) {	
-	
-	Window root;
-	Window child;
-	
-	unsigned int psychiose;
-
-	int mouse_x,mouse_y,win_x,win_y;
-	
-	XQueryPointer(display, window, &root, &child, &win_x, &win_y, &mouse_x, &mouse_y, &psychiose );
-	
-      }
 
       if (event.type == ButtonPress && event.xbutton.button == 1) { 
 
@@ -180,23 +222,35 @@ public:
                 
       if (event.type == KeyPress) {
 	
-	char buffer[1];
+	char buffer[1] = {0};
 
 	KeySym keysym;
 
-	XLookupString(&event.xkey, buffer, sizeof(buffer), &keysym, NULL);
-	printf("Key pressed: %c\n", buffer[0]);
+	XLookupString(&event.xkey, buffer, 1 , &keysym, NULL);
+	std::cout << "key pressed: " << buffer[0] << std::endl;
 	
 	if(buffer[0] == 'x') {
-
+	  
 	  std::cout << "shutting down!" << std::endl;
+	  shutdown = true;
 	  break;
 	  
 	}
 	
       }
+
+      
+      if (event.type == Expose) {
+	
+	try_to_draw_window();
+	
+	XFlush(display);
+	
+      }
       
     }
+
+    draw_helper.join();
     
     return;
 
@@ -216,6 +270,13 @@ public:
         return 1;
       }
 
+
+    XFontStruct* font = XLoadQueryFont(display, "fixed");
+    if (!font) {
+      std::cerr << "Unable to load font" << std::endl;
+      return 1;
+    }
+    
     int blackColor = BlackPixel(display, DefaultScreen(display));
     int whiteColor = WhitePixel(display, DefaultScreen(display));
 
@@ -232,12 +293,6 @@ public:
 
     XSelectInput(display, window, ExposureMask | PointerMotionMask | ButtonReleaseMask | ButtonPressMask | KeyPressMask | StructureNotifyMask);
 
-    font = XLoadQueryFont(display, "fixed");
-    if (!font) {
-      std::cerr << "Unable to load font" << std::endl;
-      return 1;
-    }
-    
     XMapWindow(display, window);
 
     gc = XCreateGC(display, window, 0, NULL); // graphic context for render?
@@ -266,15 +321,16 @@ public:
     std::cout << "done... adding elements" << std::endl;
 
     //load a layout via file dynamically:
-    active_layout = deserialize_layout_file("layouts/main_layout");
+    load_from_file("layouts/main_layout");
 
     //or statically declare your layout, in case you dont wanna change it!
     add_element(active_layout, BUTTON , 10, 70, 20 , 100, "i was statically declared!", 0);
     add_element(active_layout, BUTTON , 10, 100, 20 , 100, "me too :D - click me for red", 1);
-      
+    add_element(active_layout, BUTTON , 10, 130, 20 , 100, "im a callback example too! click me to close the window!", 2);
+    
     std::cout << "done! " << std::endl;
-
-    draw_active_layout();
+    
+    try_to_draw_window();
     
     //================================= WINDOW HANDLER =================================
     

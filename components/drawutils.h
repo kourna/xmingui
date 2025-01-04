@@ -12,9 +12,39 @@
 #include <chrono>
 #include <vector>
 
+#include "bmp_decode.h"
+#include "style_utils.h"
+
 struct layout_struct;
 
-void draw_box(Display* display, Window window, GC gc, unsigned int anchor_x, unsigned int anchor_y, unsigned int size_x, unsigned int size_y) {
+uint32_t merge_to_rgb(uint8_t r, uint8_t g, uint8_t b) {
+  return (static_cast<uint32_t>(r) << 16) | (static_cast<uint32_t>(g) << 8) | static_cast<uint32_t>(b);
+}
+
+void draw_image(Display* display, Window window, GC gc, stylesheet style,  unsigned int anchor_x, unsigned int anchor_y, std::vector<std::vector<std::array<uint8_t, 3>>> pixel_data) {
+  
+  int width = pixel_data[0].size();
+  int height = pixel_data.size();
+    
+  for(int i = 0; i < width; ++i) {
+    
+    for(int j = 0; j < height; ++j) {
+	
+      uint32_t color = merge_to_rgb(pixel_data[i][j][0],pixel_data[i][j][2],pixel_data[i][j][2]);
+      
+      XSetForeground(display, gc, color);
+
+      XDrawPoint(display, window, gc, j + anchor_x , i + anchor_y);
+      
+    }
+
+  }
+
+  return;
+  
+}
+
+void draw_box(Display* display, Window window, GC gc,  stylesheet style,  unsigned int anchor_x, unsigned int anchor_y, unsigned int size_x, unsigned int size_y) {
 
   XDrawLine(display, window, gc, anchor_x, anchor_y, anchor_x+size_x, anchor_y);
   XDrawLine(display, window, gc, anchor_x+size_x, anchor_y, anchor_x+size_x, anchor_y+size_y);
@@ -24,13 +54,11 @@ void draw_box(Display* display, Window window, GC gc, unsigned int anchor_x, uns
   return;
 }
 
-void draw_dynamic_box_with_text(Display* display, Window window, GC gc, unsigned int id , XFontStruct* font, unsigned int anchor_x, unsigned int anchor_y, unsigned int *size_x, unsigned int *size_y, std::string label) {
+void draw_dynamic_box_with_text(Display* display, Window window, GC gc, stylesheet style , unsigned int id ,  XFontStruct* font, unsigned int anchor_x, unsigned int anchor_y, unsigned int *size_x, unsigned int *size_y, std::string label) {
 
   std::string todraw = label;
   
   int font_height = font->ascent + font->descent;
-  int font_ascent = font->ascent; 
-  int font_descent = font->descent;
   int max_width = font->max_bounds.width;
   
   int total_text_width = (max_width * todraw.length()) + 2*MARGIN_X;
@@ -51,13 +79,11 @@ void draw_dynamic_box_with_text(Display* display, Window window, GC gc, unsigned
   return;
 }
 
-void draw_dynamic_text(Display* display, Window window, GC gc, unsigned int id , XFontStruct* font, unsigned int anchor_x, unsigned int anchor_y, unsigned int *size_x, unsigned int *size_y, std::string label) {
+void draw_dynamic_text(Display* display, Window window, GC gc ,  stylesheet style , unsigned int id ,  XFontStruct* font, unsigned int anchor_x, unsigned int anchor_y, unsigned int *size_x, unsigned int *size_y, std::string label) {
 
   std::string todraw = label;
   
   int font_height = font->ascent + font->descent;
-  int font_ascent = font->ascent; 
-  int font_descent = font->descent;
   int max_width = font->max_bounds.width;
   
   int total_text_width = (max_width * todraw.length()) + 2*MARGIN_X;
@@ -73,13 +99,11 @@ void draw_dynamic_text(Display* display, Window window, GC gc, unsigned int id ,
   return;
 }
 
-void draw_dynamic_underlined_text(Display* display, Window window, GC gc, unsigned int id , XFontStruct* font, unsigned int anchor_x, unsigned int anchor_y, unsigned int *size_x, unsigned int *size_y, std::string label) {
+void draw_dynamic_underlined_text(Display* display, Window window, GC gc,  stylesheet style,  unsigned int id , XFontStruct* font, unsigned int anchor_x, unsigned int anchor_y, unsigned int *size_x, unsigned int *size_y, std::string label) {
 
   std::string todraw = label;
   
   int font_height = font->ascent + font->descent;
-  int font_ascent = font->ascent; 
-  int font_descent = font->descent;
   int max_width = font->max_bounds.width;
   
   int total_text_width = (max_width * todraw.length()) + 2*MARGIN_X;
@@ -97,17 +121,15 @@ void draw_dynamic_underlined_text(Display* display, Window window, GC gc, unsign
   return;
 }
 
-void draw_dynamic_window_border(Display* display, Window window, GC gc, unsigned int width) {
+void draw_dynamic_window_border(Display* display, Window window, GC gc, stylesheet style,  unsigned int width) {
   
   XWindowAttributes window_attributes;
 
   if (XGetWindowAttributes(display, window, &window_attributes)) {
 
-    std::cout << window_attributes.width << " - width | " << window_attributes.height << " - height " << std::endl;
+    for(unsigned int i = 0; i<width; ++i) {
 
-    for(int i = 0; i<width; ++i) {
-
-      draw_box(display,window,gc,0+i,0+i,window_attributes.width-(i*2)-1, window_attributes.height-(i*2)-1);
+      draw_box(display,window,gc,style,0+i,0+i,window_attributes.width-(i*2)-1, window_attributes.height-(i*2)-1);
    
     }
     

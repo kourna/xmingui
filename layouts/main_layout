@@ -3,3 +3,4 @@ BUTTON,10,40,20,20,hi! me too  :D,0
 BORDER,3,0,0,0, ,0
 TEXT,250,10,0,0,Text element,0
 TEXT_UNDERLINED,250,30,0,0,Text element BUT WITH UNDERLINEWOOO,0
+IMAGE,100,500,0,0,images/image.bmp,0
